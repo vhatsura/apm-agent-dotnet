@@ -75,7 +75,7 @@ namespace Elastic.Apm.Report.Serialization
 						return false;
 				}
 			}
-			return true;
+			return i != 0;
 		}
 
 		public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer) =>

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Formatting;
 using System.Threading.Tasks;
 using Elastic.Apm.Logging;
 using Elastic.Apm.Tests.Mocks;
@@ -31,7 +32,9 @@ namespace Elastic.Apm.AspNetCore.Tests
 
 		private void CreateAgent(string sanitizeFieldNames = null)
 		{
-			var configSnapshot = sanitizeFieldNames == null ? new MockConfigSnapshot(_logger, captureBody: "all") : new MockConfigSnapshot(_logger, captureBody: "all", sanitizeFieldNames: sanitizeFieldNames);
+			var configSnapshot = sanitizeFieldNames == null
+				? new MockConfigSnapshot(_logger, captureBody: "all")
+				: new MockConfigSnapshot(_logger, captureBody: "all", sanitizeFieldNames: sanitizeFieldNames);
 			_capturedPayload = new SerializerMockPayloadSender(configSnapshot);
 
 			var agentComponents = new TestAgentComponents(
@@ -298,6 +301,31 @@ namespace Elastic.Apm.AspNetCore.Tests
 
 			_capturedPayload.FirstTransaction.Context.Request.Body.Should()
 				.Be(shouldBeSanitized ? $"Input1=test1&{formName}=[REDACTED]" : $"Input1=test1&{formName}=test2");
+		}
+
+
+		[Fact]
+		public async Task DefaultWithJsonDataNotSanitizeBody()
+		{
+			CreateAgent();
+
+			var postData = new { Data = "sample" };
+
+			var req = new HttpRequestMessage(HttpMethod.Post, "api/Home/Post")
+			{
+				Content = new ObjectContent(postData.GetType(), postData, new JsonMediaTypeFormatter())
+			};
+
+			var res = await _client.SendAsync(req);
+
+			res.IsSuccessStatusCode.Should().BeTrue();
+
+			_capturedPayload.Errors.Should().BeNullOrEmpty();
+			_capturedPayload.Transactions.Should().ContainSingle();
+
+			_capturedPayload.FirstTransaction.Context.Request.Body.Should().BeOfType<string>();
+			_capturedPayload.FirstTransaction.Context.Request.Body.As<string>().Should().NotBeNullOrWhiteSpace();
+			_capturedPayload.FirstTransaction.Context.Request.Body.As<string>().Should().Be("{\"Data\":\"sample\"}");
 		}
 	}
 }
