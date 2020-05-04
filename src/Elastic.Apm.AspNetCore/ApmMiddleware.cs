@@ -143,7 +143,7 @@ namespace Elastic.Apm.AspNetCore
 					//fixup Transaction.Name - e.g. /user/profile/1 -> /user/profile/{id}
 					var routeData = context.GetRouteData()?.Values;
 
-					if (routeData != null)
+					if (routeData != null && routeData.Count > 0)
 					{
 						var name = GetNameFromRouteContext(routeData);
 
@@ -270,8 +270,6 @@ namespace Elastic.Apm.AspNetCore
 		private static string GetNameFromRouteContext(IDictionary<string, object> routeValues)
 		{
 			string name = null;
-
-			if (routeValues.Count <= 0) return null;
 
 			routeValues.TryGetValue("controller", out var controller);
 			var controllerString = controller == null ? string.Empty : controller.ToString();

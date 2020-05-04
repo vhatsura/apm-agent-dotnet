@@ -16,7 +16,7 @@ namespace Elastic.Apm.Logging
 			_errorOut = errorOut ?? Console.Error;
 		}
 
-		public static ConsoleLogger Instance { get; } = new ConsoleLogger(DefaultLogLevel);
+		//public static ConsoleLogger Instance { get; } = new ConsoleLogger(DefaultLogLevel);
 
 		private LogLevel Level { get; }
 
